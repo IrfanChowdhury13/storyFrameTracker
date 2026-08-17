@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Story Frame - Admin Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background-color: #050505; color: #d1d5db; }
+    .glass-card { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(6, 182, 212, 0.2); }
+    input, select { background-color: rgba(17, 24, 39, 0.9); border: 1px solid #374151; color: white; transition: all 0.3s ease; }
+    input:focus, select:focus { outline: none; border-color: #06b6d4; box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2); }
+    /* Date picker icon color fix for dark mode */
+    ::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.6; cursor: pointer; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-10 font-sans selection:bg-cyan-500 selection:text-white">
+
+  <!-- Password Screen -->
+  <div id="loginScreen" class="fixed inset-0 bg-[#050505] bg-opacity-95 flex items-center justify-center z-50 backdrop-blur-sm">
+    <div class="glass-card p-10 rounded-2xl shadow-[0_0_30px_rgba(6,182,212,0.1)] w-96 text-center border-t border-t-cyan-500/50">
+      <img src="logo.png" alt="Logo" class="h-16 mx-auto drop-shadow-[0_0_10px_rgba(6,182,212,0.5)] mb-4">
+      <h2 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 tracking-widest mb-6 uppercase">Admin Portal</h2>
+      <input type="password" id="passInput" placeholder="Enter Password" class="w-full p-3 rounded-lg mb-4 text-center tracking-widest">
+      <button onclick="checkPassword()" class="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-3 rounded-lg shadow-lg shadow-cyan-900/50 transition">Unlock System</button>
+      <p id="errorMsg" class="text-red-400 text-sm mt-4 hidden tracking-wider">Access Denied: Incorrect password!</p>
+    </div>
+  </div>
+
+  <!-- Admin Panel -->
+  <div id="adminPanel" class="hidden w-full max-w-2xl glass-card rounded-2xl shadow-[0_0_40px_rgba(6,182,212,0.05)] overflow-hidden">
+    
+    <!-- Header with Logo -->
+    <div class="flex items-center justify-between p-6 border-b border-gray-800 bg-gray-900/50">
+      <div class="flex items-center gap-3">
+        <img src="logo.png" alt="Logo" class="h-8 object-contain">
+        <h2 class="text-xl font-bold text-white tracking-widest">CONTROL <span class="text-cyan-400">PANEL</span></h2>
+      </div>
+      <a href="index.html" class="text-[10px] uppercase tracking-widest text-gray-400 hover:text-cyan-400 border border-gray-700 hover:border-cyan-500 px-3 py-1.5 rounded transition">View Dashboard &rarr;</a>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="flex bg-gray-900/80 border-b border-gray-800">
+      <button id="tabWorkBtn" onclick="switchTab('work')" class="flex-1 py-4 text-sm uppercase tracking-widest font-bold text-cyan-400 border-b-2 border-cyan-500 bg-gray-800/30 transition">Add Work Record</button>
+      <button id="tabUserBtn" onclick="switchTab('user')" class="flex-1 py-4 text-sm uppercase tracking-widest font-bold text-gray-500 hover:text-cyan-400 border-b-2 border-transparent transition">Manage Users</button>
+    </div>
+
+    <div class="p-8">
+      <div id="loader" class="text-center text-cyan-500 text-xs font-semibold tracking-widest animate-pulse mb-6 hidden uppercase">Syncing Database...</div>
+
+      <!-- Add Work Form -->
+      <div id="workSection">
+        <form id="dataForm" onsubmit="submitWork(event)">
+          <div class="mb-5">
+            <label class="block text-gray-400 text-xs uppercase tracking-widest font-bold mb-2">Team Member</label>
+            <select id="workName" class="w-full p-3 rounded-lg" required>
+              <option value="" disabled selected>Loading members...</option>
+            </select>
+          </div>
+          <div class="mb-5">
+            <label class="block text-gray-400 text-xs uppercase tracking-widest font-bold mb-2">Date</label>
+            <input type="date" id="workDate" class="w-full p-3 rounded-lg" required>
+          </div>
+          <div class="mb-5">
+            <label class="block text-gray-400 text-xs uppercase tracking-widest font-bold mb-2">Work Topic / Title</label>
+            <input type="text" id="workTopic" placeholder="e.g. Intro Animation, Audio Sync" class="w-full p-3 rounded-lg" required>
+          </div>
+          <div class="grid grid-cols-2 gap-5 mb-8">
+            <div>
+              <label class="block text-gray-400 text-xs uppercase tracking-widest font-bold mb-2">Minutes</label>
+              <input type="number" id="workMinutes" placeholder="0" class="w-full p-3 rounded-lg" required>
+            </div>
+            <div>
+              <label class="block text-gray-400 text-xs uppercase tracking-widest font-bold mb-2">Amount (৳)</label>
+              <input type="number" id="workAmount" placeholder="0" class="w-full p-3 rounded-lg" required>
+            </div>
+          </div>
+          <button type="submit" class="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-3 rounded-lg shadow-[0_0_15px_rgba(6,182,212,0.3)] transition uppercase tracking-widest text-sm">Save Record to Database</button>
+        </form>
+      </div>
+
+      <!-- Manage Users Section -->
+      <div id="userSection" class="hidden">
+        <div class="flex gap-3 mb-8">
+          <input type="text" id="newUserName" placeholder="Enter new member name" class="flex-1 p-3 rounded-lg">
+          <button onclick="addUser()" class="bg-cyan-600 hover:bg-cyan-500 text-white px-6 font-bold rounded-lg transition uppercase text-xs tracking-widest">Add User</button>
+        </div>
+        
+        <h3 class="text-xs uppercase tracking-widest font-bold text-gray-500 mb-3 border-b border-gray-800 pb-2">Active Roster</h3>
+        <ul id="userList" class="divide-y divide-gray-800">
+          <!-- Users will load here -->
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 🔴 পাসওয়ার্ড (আপনি চাইলে বদলাতে পারেন) 🔴
+    const ADMIN_PASSWORD = "admin";
+    // 🔴 এখানে আপনার গুগল শিটের লিংকটি দিন 🔴
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxpWMShhknGetXfaJJdZOg4lwjJAtBdAyBCXRFOMZpDmjiFOIJ1qq4o59VRgErTQHAY/exec";
+
+    let currentUsers = [];
+
+    function checkPassword() {
+      if (document.getElementById('passInput').value === ADMIN_PASSWORD) {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('adminPanel').classList.remove('hidden');
+        loadUsers();
+      } else {
+        document.getElementById('errorMsg').classList.remove('hidden');
+      }
+    }
+
+    function switchTab(tab) {
+      document.getElementById('workSection').classList.toggle('hidden', tab !== 'work');
+      document.getElementById('userSection').classList.toggle('hidden', tab !== 'user');
+      
+      const activeClass = "flex-1 py-4 text-sm uppercase tracking-widest font-bold text-cyan-400 border-b-2 border-cyan-500 bg-gray-800/30 transition";
+      const inactiveClass = "flex-1 py-4 text-sm uppercase tracking-widest font-bold text-gray-500 hover:text-cyan-400 border-b-2 border-transparent transition";
+
+      document.getElementById('tabWorkBtn').className = tab === 'work' ? activeClass : inactiveClass;
+      document.getElementById('tabUserBtn').className = tab === 'user' ? activeClass : inactiveClass;
+    }
+
+    function loadUsers() {
+      document.getElementById('loader').classList.remove('hidden');
+      fetch(SCRIPT_URL + "?action=get_all")
+        .then(res => res.json())
+        .then(data => {
+          currentUsers = data.users;
+          updateUI();
+          document.getElementById('loader').classList.add('hidden');
+        });
+    }
+
+    function updateUI() {
+      const select = document.getElementById('workName');
+      select.innerHTML = '<option value="" disabled selected>Select Team Member</option>';
+      currentUsers.forEach(u => select.innerHTML += `<option value="${u}">${u}</option>`);
+
+      const list = document.getElementById('userList');
+      list.innerHTML = '';
+      currentUsers.forEach(u => {
+        list.innerHTML += `
+          <li class="py-4 flex justify-between items-center group">
+            <span class="font-bold text-gray-300 group-hover:text-cyan-400 transition">${u}</span>
+            <div class="flex gap-4">
+              <button onclick="editUser('${u}')" class="text-gray-500 hover:text-blue-400 text-xs uppercase tracking-widest font-bold transition">Edit</button>
+              <button onclick="deleteUser('${u}')" class="text-gray-500 hover:text-red-400 text-xs uppercase tracking-widest font-bold transition">Delete</button>
+            </div>
+          </li>`;
+      });
+    }
+
+    function addUser() {
+      const name = document.getElementById('newUserName').value.trim();
+      if(!name) return alert("Please enter a name");
+      if(currentUsers.includes(name)) return alert("User already exists!");
+
+      document.getElementById('loader').classList.remove('hidden');
+      fetch(SCRIPT_URL + `?action=add_user&name=${encodeURIComponent(name)}`)
+        .then(() => {
+          document.getElementById('newUserName').value = '';
+          loadUsers();
+        });
+    }
+
+    function editUser(oldName) {
+      const newName = prompt(`Change name for "${oldName}" to:`, oldName);
+      if(newName && newName.trim() !== "" && newName !== oldName) {
+        document.getElementById('loader').classList.remove('hidden');
+        fetch(SCRIPT_URL + `?action=edit_user&oldName=${encodeURIComponent(oldName)}&newName=${encodeURIComponent(newName)}`)
+          .then(() => loadUsers());
+      }
+    }
+
+    function deleteUser(name) {
+      if(confirm(`Are you sure you want to remove "${name}" from the active roster?`)) {
+        document.getElementById('loader').classList.remove('hidden');
+        fetch(SCRIPT_URL + `?action=delete_user&name=${encodeURIComponent(name)}`)
+          .then(() => loadUsers());
+      }
+    }
+
+    function submitWork(e) {
+      e.preventDefault();
+      document.getElementById('loader').classList.remove('hidden');
+      
+      const name = document.getElementById('workName').value;
+      const date = document.getElementById('workDate').value;
+      const topic = document.getElementById('workTopic').value;
+      const minutes = document.getElementById('workMinutes').value;
+      const amount = document.getElementById('workAmount').value;
+
+      fetch(SCRIPT_URL + `?action=save_work&name=${encodeURIComponent(name)}&date=${encodeURIComponent(date)}&topic=${encodeURIComponent(topic)}&minutes=${encodeURIComponent(minutes)}&amount=${encodeURIComponent(amount)}`)
+        .then(() => {
+          alert("Work record saved successfully!");
+          document.getElementById('dataForm').reset();
+          document.getElementById('loader').classList.add('hidden');
+        });
+    }
+  </script>
+</body>
+</html>
